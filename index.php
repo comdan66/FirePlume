@@ -5,6 +5,9 @@
   // app 資料夾
   $app_folder = 'app';
 
+  // config 資料夾
+  $cfg_folder = 'config';
+
   //設定時區
   date_default_timezone_set ('Asia/Taipei');
 
@@ -47,11 +50,22 @@
   if (!is_dir (F_APP))
     exit ("找不到 app 資料夾！");
 
+  // 定義 config 路徑常數
+  if (($cfg_folder = realpath ($cfg_folder)) !== FALSE)
+    define ('F_CFG', DIRECTORY_SEPARATOR . trim ($cfg_folder, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+  unset ($cfg_folder);
+
+  if (!is_dir (F_APP))
+    exit ("找不到 app 資料夾！");
+
   // 定義後端檔案格式
   define ('EXT', '.php');
 
   // 定義專案目錄
   define ('PATH', str_replace (pathinfo (__FILE__, PATHINFO_BASENAME), '', __FILE__));
   
+  // 定義版本
+  define('VERSION', '0.0.1');
+
   // 載入主體
-  require_once F_SYS . 'core/FirePlume.php';
+  require_once F_SYS . 'core' . DIRECTORY_SEPARATOR . 'Plume.php';
