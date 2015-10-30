@@ -1,4 +1,4 @@
-<?php if (!defined('PATH')) exit ('不允許直接呼叫檔案！');
+<?php if (!defined ('PATH')) exit ('不允許直接呼叫檔案！');
 
 /**
  * @author      OA Wu <comdan66@gmail.com>
@@ -39,7 +39,7 @@ class Router {
     $uris = is_string ($uris) ? array ($uris) : $uris;
     $c = count ($uris);
     $prefix = trim ($prefix, '/') . '/';
-
+    $controller = underscore ($controller, '-');
     self::get ($prefix . implode ('/(:id)/', $uris) . '/', $prefix . $controller . '@index');
     self::get ($prefix . implode ('/(:id)/', $uris) . '/(:id)', $prefix . $controller . '@show($1' . ($c > 1 ? ', ' . implode (', ', array_map (function ($a) { return '$' . $a; }, range (2, $c))) : '') . ')');
     self::get ($prefix . implode ('/(:id)/', $uris) . '/add', $prefix . $controller . '@add(' . ($c > 1 ? ', ' . implode (', ', array_map (function ($a) { return '$' . $a; }, range (1, $c - 1))) : '') . ')');
@@ -60,6 +60,7 @@ class Router {
     $uris = is_string ($uris) ? array ($uris) : $uris;
     $c = count ($uris);
     $prefix = trim ($group . trim ($prefix, '/'), '/') . '/';
+    $controller = underscore ($controller, '-');
 
     self::get ($prefix . implode ('/(:id)/', $uris) . '/', $prefix . $controller . '@index(' . ($c > 1 ? implode (', ', array_map (function ($a) { return '$' . $a; }, range (1, $c - 1))) . ', ' : '') . '0)');
     self::get ($prefix . implode ('/(:id)/', $uris) . '/(:num)', $prefix . $controller . '@index($1' . ($c > 1 ? ', ' . implode (', ', array_map (function ($a) { return '$' . $a; }, range (2, $c))) : '') . ')');
@@ -91,6 +92,8 @@ class FireRouter {
   private static $methodName = null;
 
   public static function fetch () {
+    require_once F_CFG . 'router.php';
+
     self::$defaultUriString = isset (Router::getRouters ()['get:/']) ? Router::getRouters ()['get:/'] : null;
 
     if (!($uriString = FireUri::fetchUri ()))
@@ -122,10 +125,10 @@ class FireRouter {
   private static function verifyUris ($uris) {
 
     for ($i = 0, $c = count ($uris) - 1; $i < $c; $i++) {
-      if (file_exists (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), $i > 0 ? array_slice ($uris, 0, $i + 1) : array ($uris[$i]))) . EXT))
+      if (file_exists (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), $i > 0 ? array_slice ($uris, 0, $i + 1) : array (ucfirst (camelize ($uris[$i]))))) . EXT))
         return $uris;
 
-      if (is_dir (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), array_slice ($uris, 0, $i + 1)))) && isset ($uris[$i + 1]) && file_exists (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), array_slice ($uris, 0, $i + 1), array ($uris[$i + 1] . EXT)))) && self::setDirectory (array_slice ($uris, 0, $i + 1)))
+      if (is_dir (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), array_slice ($uris, 0, $i + 1)))) && isset ($uris[$i + 1]) && file_exists (F_APP . implode (DIRECTORY_SEPARATOR, array_merge (array ('controller'), array_slice ($uris, 0, $i + 1), array (ucfirst (camelize ($uris[$i + 1])) . EXT)))) && self::setDirectory (array_slice ($uris, 0, $i + 1)))
         return array_slice ($uris, $i + 1);
     }
 
@@ -133,13 +136,30 @@ class FireRouter {
   }
 
   private static function setClassName ($className) {
-    return self::$className = str_replace (array (DIRECTORY_SEPARATOR, '.'), '', $className);
+    return self::$className = ucfirst (camelize (str_replace (array (DIRECTORY_SEPARATOR, '.'), '', $className)));
   }
   private static function setMethodName ($methodName) {
     return self::$methodName = $methodName;
   }
   private static function setDirectory ($dir) {
     return self::$directory = str_replace (array (DIRECTORY_SEPARATOR, '.'), '', $dir);
+  }
+  public static function getClassName () {
+    return self::$className;
+  }
+  public static function getMethodName () {
+    return self::$methodName;
+  }
+  public static function getDirectory () {
+    return self::$directory;
+  }
+  public static function getParameters () {
+    if ((ucfirst (camelize (self::$uris[0])) == self::getClassName ()) && (self::$uris[1] == self::getMethodName ()))
+      return array_slice(self::$uris, 2);
+    else if (ucfirst (camelize (self::$uris[0])) == self::getClassName ())
+      return array_slice(self::$uris, 1);
+    else
+      return self::$uris;
   }
 
   private static function parseRouter () {

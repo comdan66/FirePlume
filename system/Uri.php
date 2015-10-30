@@ -1,4 +1,4 @@
-<?php if (!defined('PATH')) exit ('不允許直接呼叫檔案！');
+<?php if (!defined ('PATH')) exit ('不允許直接呼叫檔案！');
 
 class FireUri {
   private static $uriString = '';
@@ -23,7 +23,7 @@ class FireUri {
     return self::setUriString ('');
   }
   private static function setUriString ($str) {
-    $str = FireUtf8::removeInvisibleCharacters ($str, FALSE);
+    $str = removeInvisibleCharacters ($str, FALSE);
     self::$uriString = ($str == '/') ? '' : $str;
     
     self::$uris = array ();
